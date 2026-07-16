@@ -13,6 +13,15 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'Method not allowed' });
   }
 
+  const expectedSecret = process.env.ADMIN_SECRET;
+  const providedSecret = request.headers['x-admin-secret'];
+  if (!expectedSecret) {
+    return response.status(500).json({ error: 'Server misconfigured: ADMIN_SECRET not set' });
+  }
+  if (!providedSecret || providedSecret !== expectedSecret) {
+    return response.status(401).json({ error: 'Unauthorized' });
+  }
+
   try {
     const { filename: rawName, contentType, dataBase64 } = request.body || {};
 

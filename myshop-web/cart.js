@@ -66,6 +66,9 @@ function checkoutViaWhatsApp() {
   cart.forEach(item => {
     const subtotal = item.price * item.qty;
     message += `- ${item.name} x${item.qty} - ${formatKsh(subtotal)}\n`;
+    if (item.image_url) {
+      message += `  Photo: ${item.image_url}\n`;
+    }
   });
   message += `\nTotal: ${formatKsh(cartTotal())}`;
 

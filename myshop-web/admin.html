@@ -50,7 +50,10 @@
 </div>
 
 <script src="config.js"></script>
+<script src="admin-auth.js"></script>
 <script>
+requireAdminLogin();
+
 document.getElementById('imageFile').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (file) {
@@ -85,7 +88,7 @@ document.getElementById('productForm').addEventListener('submit', async function
     // Sent as base64 JSON rather than a raw binary body — see the comment
     // at the top of api/upload.js for why.
     const dataBase64 = await fileToBase64(imageFile);
-    const uploadRes = await fetch('/api/upload', {
+    const uploadRes = await adminFetch('/api/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -100,7 +103,7 @@ document.getElementById('productForm').addEventListener('submit', async function
     status.textContent = 'Saving product...';
 
     // Step 2: create product in FastAPI backend
-    const productRes = await fetch(`${API_URL}/admin/products`, {
+    const productRes = await adminFetch(`${API_URL}/admin/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -116,7 +119,7 @@ document.getElementById('productForm').addEventListener('submit', async function
     if (!productRes.ok) throw new Error(productData.detail || 'Product creation failed');
 
     // Step 3: link uploaded image to the new product
-    const imgRes = await fetch(`${API_URL}/admin/products/${productData.id}/images`, {
+    const imgRes = await adminFetch(`${API_URL}/admin/products/${productData.id}/images`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ blob_url: uploadData.url, is_primary: true })

@@ -95,7 +95,10 @@
 </div>
 
 <script src="config.js"></script>
+<script src="admin-auth.js"></script>
 <script>
+requireAdminLogin();
+
 let editingId = null;
 
 // Reads a File into a base64 string (no data-URL prefix) for sending as
@@ -180,7 +183,7 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
 
   try {
     // Step 1: update product fields
-    const updateRes = await fetch(`${API_URL}/admin/products/${editingId}`, {
+    const updateRes = await adminFetch(`${API_URL}/admin/products/${editingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -199,7 +202,7 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
     if (imageFile) {
       status.textContent = 'Uploading new image...';
       const dataBase64 = await fileToBase64(imageFile);
-      const uploadRes = await fetch('/api/upload', {
+      const uploadRes = await adminFetch('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -211,7 +214,7 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
       const uploadData = await uploadRes.json();
       if (!uploadRes.ok) throw new Error(uploadData.error || 'Image upload failed');
 
-      const imgRes = await fetch(`${API_URL}/admin/products/${editingId}/image`, {
+      const imgRes = await adminFetch(`${API_URL}/admin/products/${editingId}/image`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ blob_url: uploadData.url, is_primary: true })
@@ -234,7 +237,7 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
 
 async function deleteProduct(id) {
   if (!confirm('Delete this product? This cannot be undone.')) return;
-  const res = await fetch(`${API_URL}/admin/products/${id}`, { method: 'DELETE' });
+  const res = await adminFetch(`${API_URL}/admin/products/${id}`, { method: 'DELETE' });
   if (res.ok) {
     loadList();
   } else {

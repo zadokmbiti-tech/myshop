@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import psycopg2
@@ -19,6 +19,18 @@ app.add_middleware(
 
 def get_conn():
     return psycopg2.connect(os.getenv("DATABASE_URL"))
+
+
+def require_admin(x_admin_secret: str | None = Header(default=None, alias="X-Admin-Secret")):
+    """Dependency guarding every /admin/* route. Reject the request unless it
+    carries the shared secret configured via the ADMIN_SECRET env var."""
+    expected = os.getenv("ADMIN_SECRET")
+    if not expected:
+        # Fail closed: if the server isn't configured with a secret, refuse
+        # rather than silently letting everyone in.
+        raise HTTPException(status_code=500, detail="Server misconfigured: ADMIN_SECRET not set")
+    if not x_admin_secret or x_admin_secret != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 class ProductCreate(BaseModel):
@@ -127,7 +139,7 @@ def get_product(product_id: int):
     }
 
 
-@app.post("/admin/products")
+@app.post("/admin/products", dependencies=[Depends(require_admin)])
 def create_product(product: ProductCreate):
     conn = get_conn()
     cur = conn.cursor()
@@ -146,7 +158,7 @@ def create_product(product: ProductCreate):
     return {"id": new_id, "message": "Product created"}
 
 
-@app.post("/admin/products/{product_id}/images")
+@app.post("/admin/products/{product_id}/images", dependencies=[Depends(require_admin)])
 def add_product_image(product_id: int, image: ProductImageCreate):
     conn = get_conn()
     cur = conn.cursor()
@@ -172,7 +184,7 @@ def add_product_image(product_id: int, image: ProductImageCreate):
     return {"id": new_id, "message": "Image added"}
 
 
-@app.put("/admin/products/{product_id}")
+@app.put("/admin/products/{product_id}", dependencies=[Depends(require_admin)])
 def update_product(product_id: int, product: ProductUpdate):
     conn = get_conn()
     cur = conn.cursor()
@@ -196,7 +208,7 @@ def update_product(product_id: int, product: ProductUpdate):
     return {"message": "Product updated"}
 
 
-@app.put("/admin/products/{product_id}/image")
+@app.put("/admin/products/{product_id}/image", dependencies=[Depends(require_admin)])
 def replace_product_image(product_id: int, image: ProductImageCreate):
     conn = get_conn()
     cur = conn.cursor()
@@ -222,7 +234,7 @@ def replace_product_image(product_id: int, image: ProductImageCreate):
     return {"id": new_id, "message": "Image updated"}
 
 
-@app.delete("/admin/products/{product_id}")
+@app.delete("/admin/products/{product_id}", dependencies=[Depends(require_admin)])
 def delete_product(product_id: int):
     conn = get_conn()
     cur = conn.cursor()
