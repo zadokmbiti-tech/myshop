@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Shop</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<section class="hero">
+  <span class="eyebrow">stitched by hand, made with love</span>
+  <h1>Cozy knits &amp; crochet, made one stitch at a time</h1>
+  <p>Every piece is handmade to order. Browse the collection and reach us directly on WhatsApp to place yours.</p>
+  <div class="hero-actions">
+    <a href="shop.html" class="btn">Shop the Collection</a>
+    <a href="contact.html" class="btn btn-outline">Get in Touch</a>
+  </div>
+  <div class="hero-image">
+    <img src="images/hero-tools.jpg" alt="Yarn, hooks, and tools of the craft">
+  </div>
+</section>
+
+<div class="stitch-divider">
+  <svg viewBox="0 0 200 10" preserveAspectRatio="none">
+    <path d="M0,0 Q5,10 10,0 Q15,10 20,0 Q25,10 30,0 Q35,10 40,0 Q45,10 50,0 Q55,10 60,0 Q65,10 70,0 Q75,10 80,0 Q85,10 90,0 Q95,10 100,0 Q105,10 110,0 Q115,10 120,0 Q125,10 130,0 Q135,10 140,0 Q145,10 150,0 Q155,10 160,0 Q165,10 170,0 Q175,10 180,0 Q185,10 190,0 Q195,10 200,0 L200,0 L0,0 Z" fill="#E9DBC3"/>
+  </svg>
+</div>
+
+<div class="section-heading">
+  <h2>Trending Now</h2>
+  <span class="tag">— fresh off the hook</span>
+</div>
+<div class="grid" id="featured-grid">
+  <p style="padding: 24px; color:#8a7a6d;">Loading products...</p>
+</div>
+
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script src="layout.js"></script>
+<script>
+async function loadFeatured() {
+  const grid = document.getElementById('featured-grid');
+  try {
+    const res = await fetch(`${API_URL}/products`);
+    const products = await res.json();
+    if (products.length === 0) {
+      grid.innerHTML = '<div class="empty-state">No products yet. Check back soon!</div>';
+      return;
+    }
+    grid.innerHTML = products.slice(0, 8).map(productCard).join('');
+  } catch (err) {
+    grid.innerHTML = '<div class="empty-state">Could not load products. Is the backend running?</div>';
+  }
+}
+
+function productCard(p) {
+  const img = p.image_url || 'https://placehold.co/400x400?text=No+Image';
+  const priceHtml = p.sale_price
+    ? `<span class="original">${formatKsh(p.price)}</span><span class="sale">${formatKsh(p.sale_price)}</span>`
+    : formatKsh(p.price);
+  return `
+    <a class="card" href="product.html?id=${p.id}">
+      <img src="${img}" alt="${p.name}">
+      <div class="card-body">
+        ${p.is_new ? '<span class="badge-new">NEW</span><br>' : ''}
+        <div class="name">${p.name}</div>
+        <div class="price">${priceHtml}</div>
+      </div>
+    </a>
+  `;
+}
+
+loadFeatured();
+</script>
+
+</body>
+</html>

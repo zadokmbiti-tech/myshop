@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop - My Shop</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="search-bar" style="padding: 16px 24px;">
+  <input type="text" id="searchInput" placeholder="Search products..."
+    style="width:100%; max-width:400px; padding:10px 14px; border:1px solid #ccc; border-radius:6px; font-size:15px;">
+</div>
+
+<div class="grid" id="grid">
+  <p style="padding: 24px; color:#777;">Loading products...</p>
+</div>
+
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script src="layout.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+let activeCategory = params.get('category') || '';
+let allProducts = [];
+
+function productCard(p) {
+  const img = p.image_url || 'https://placehold.co/400x400?text=No+Image';
+  const priceHtml = p.sale_price
+    ? `<span class="original">${formatKsh(p.price)}</span><span class="sale">${formatKsh(p.sale_price)}</span>`
+    : formatKsh(p.price);
+  return `
+    <a class="card" href="product.html?id=${p.id}">
+      <img src="${img}" alt="${p.name}">
+      <div class="card-body">
+        ${p.is_new ? '<span class="badge-new">NEW</span><br>' : ''}
+        <div class="name">${p.name}</div>
+        <div class="price">${priceHtml}</div>
+      </div>
+    </a>
+  `;
+}
+
+function renderGrid(products) {
+  const grid = document.getElementById('grid');
+  if (products.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No products found.</div>';
+    return;
+  }
+  grid.innerHTML = products.map(productCard).join('');
+}
+
+async function loadProducts() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '<p style="padding: 24px; color:#777;">Loading products...</p>';
+  try {
+    const url = activeCategory ? `${API_URL}/products?category=${activeCategory}` : `${API_URL}/products`;
+    const res = await fetch(url);
+    allProducts = await res.json();
+    renderGrid(allProducts);
+  } catch (err) {
+    grid.innerHTML = '<div class="empty-state">Could not load products. Is the backend running?</div>';
+  }
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const term = e.target.value.trim().toLowerCase();
+  const filtered = term
+    ? allProducts.filter(p => p.name.toLowerCase().includes(term))
+    : allProducts;
+  renderGrid(filtered);
+});
+
+loadProducts();
+</script>
+
+</body>
+</html>

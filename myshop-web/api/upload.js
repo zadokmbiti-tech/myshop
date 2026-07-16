@@ -1,0 +1,41 @@
+import { put } from '@vercel/blob';
+
+// The file is sent as base64 inside a normal JSON body (see admin.html /
+// manage.html). We deliberately avoid sending it as a raw binary body: under
+// `vercel dev` for this (non-Next.js) Serverless Function, the raw request
+// stream comes back empty no matter how it's read — something upstream
+// drains it before our handler runs. JSON is a content type Vercel's
+// default body parser handles reliably in both `vercel dev` and production,
+// so this sidesteps that problem entirely instead of fighting it.
+
+export default async function handler(request, response) {
+  if (request.method !== 'POST') {
+    return response.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { filename: rawName, contentType, dataBase64 } = request.body || {};
+
+    if (!dataBase64) {
+      return response.status(400).json({ error: 'Upload body was empty — no file data received.' });
+    }
+
+    const fileBuffer = Buffer.from(dataBase64, 'base64');
+
+    if (!fileBuffer || fileBuffer.length === 0) {
+      return response.status(400).json({ error: 'Upload body was empty — decoded file had 0 bytes.' });
+    }
+
+    const safeName = (rawName || `image-${Date.now()}.jpg`).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filename = `products/${Date.now()}-${safeName}`;
+
+    const blob = await put(filename, fileBuffer, {
+      access: 'public',
+      contentType: contentType || 'application/octet-stream',
+    });
+
+    return response.status(200).json({ url: blob.url });
+  } catch (error) {
+    return response.status(500).json({ error: error.message });
+  }
+}

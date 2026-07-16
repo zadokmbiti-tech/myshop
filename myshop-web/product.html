@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product - My Shop</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="product-detail" id="detail">
+  <p style="padding: 24px; color:#777;">Loading product...</p>
+</div>
+
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script src="layout.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const productId = params.get('id');
+
+async function loadProduct() {
+  const detail = document.getElementById('detail');
+  if (!productId) {
+    detail.innerHTML = '<div class="empty-state">No product specified.</div>';
+    return;
+  }
+  try {
+    const res = await fetch(`${API_URL}/products/${productId}`);
+    if (!res.ok) throw new Error('Not found');
+    const p = await res.json();
+
+    const images = p.images.length ? p.images : ['https://placehold.co/500x500?text=No+Image'];
+    const priceHtml = p.sale_price
+      ? `<span class="original">${formatKsh(p.price)}</span> <span class="sale">${formatKsh(p.sale_price)}</span>`
+      : formatKsh(p.price);
+
+    detail.innerHTML = `
+      <div class="product-images">
+        ${images.map(url => `<img src="${url}" alt="${p.name}">`).join('')}
+      </div>
+      <div class="product-info">
+        ${p.is_new ? '<span class="badge-new">NEW</span>' : ''}
+        <h1>${p.name}</h1>
+        <div class="price">${priceHtml}</div>
+        <p class="desc">${p.description || ''}</p>
+        <div class="qty-row">
+          <label for="qty">Qty:</label>
+          <input type="number" id="qty" value="1" min="1">
+        </div>
+        <button class="btn" id="addToCartBtn" style="width:100%; margin-bottom:10px;">Add to Cart</button>
+        <a class="whatsapp-btn" id="orderNowBtn" target="_blank">Order Now via WhatsApp</a>
+      </div>
+    `;
+
+    document.getElementById('addToCartBtn').addEventListener('click', () => {
+      const qty = parseInt(document.getElementById('qty').value) || 1;
+      addToCart({ id: p.id, name: p.name, price: p.price, sale_price: p.sale_price, images: p.images }, qty);
+      alert('Added to cart!');
+    });
+
+    const orderBtn = document.getElementById('orderNowBtn');
+    const price = p.sale_price || p.price;
+    orderBtn.addEventListener('click', (e) => {
+      const qty = parseInt(document.getElementById('qty').value) || 1;
+      const message = `Hi, I'd like to order:\n\n- ${p.name} x${qty} - ${formatKsh(price * qty)}`;
+      orderBtn.href = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent(message)}`;
+    });
+
+  } catch (err) {
+    detail.innerHTML = '<div class="empty-state">Could not load this product.</div>';
+  }
+}
+
+loadProduct();
+</script>
+
+</body>
+</html>

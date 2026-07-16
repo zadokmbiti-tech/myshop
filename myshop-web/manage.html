@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Products - Admin</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .admin-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 24px; border-bottom: 1px solid #eee;
+  }
+  .admin-header a { text-decoration: none; color: #111; font-weight: 600; }
+  .manage-list { max-width: 800px; margin: 0 auto; padding: 24px; }
+  .manage-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px;
+  }
+  .manage-row img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; background: #f2f2f2; }
+  .manage-row .info { flex: 1; }
+  .manage-row .name { font-weight: 600; }
+  .manage-row .meta { color: #888; font-size: 0.85rem; }
+  .manage-row button {
+    padding: 6px 14px; border-radius: 4px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.85rem;
+  }
+  .manage-row .delete-btn { color: #c0392b; border-color: #f2c6c1; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    align-items: center; justify-content: center; z-index: 1000;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 10px; padding: 24px; width: 90%; max-width: 420px;
+    max-height: 85vh; overflow-y: auto;
+  }
+  .modal label { display: block; margin-top: 14px; font-weight: 600; font-size: 0.9rem; }
+  .modal input, .modal textarea, .modal select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+  .modal .actions { margin-top: 18px; display: flex; gap: 10px; }
+  .modal .actions button { flex: 1; padding: 10px; border: none; border-radius: 4px; cursor: pointer; }
+  .modal .save-btn { background: #111; color: #fff; }
+  .modal .cancel-btn { background: #eee; }
+  #modalPreview { max-width: 100%; margin-top: 8px; border-radius: 6px; display: none; }
+</style>
+</head>
+<body>
+
+<div class="admin-header">
+  <span>Manage Products</span>
+  <a href="admin.html">+ Add New Product</a>
+</div>
+
+<div class="manage-list" id="list">
+  <p style="color:#777;">Loading products...</p>
+</div>
+
+<!-- Edit modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>Edit Product</h3>
+    <form id="editForm">
+      <label>Product Name</label>
+      <input type="text" id="editName" required>
+
+      <label>Description</label>
+      <textarea id="editDescription" rows="3"></textarea>
+
+      <label>Price (KSh)</label>
+      <input type="number" id="editPrice" required>
+
+      <label>Sale Price (optional)</label>
+      <input type="number" id="editSalePrice">
+
+      <label>Category</label>
+      <select id="editCategory" required>
+        <option value="men">Men</option>
+        <option value="women">Women</option>
+        <option value="unisex">Unisex</option>
+        <option value="children">Children</option>
+      </select>
+
+      <label><input type="checkbox" id="editIsNew" style="width:auto; display:inline-block;"> Mark as New</label>
+
+      <label>Replace Image (optional — leave blank to keep current)</label>
+      <input type="file" id="editImageFile" accept="image/*">
+      <img id="modalPreview" alt="Preview">
+
+      <div class="actions">
+        <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
+        <button type="submit" class="save-btn" id="saveBtn">Save Changes</button>
+      </div>
+      <div id="modalStatus" style="margin-top:10px; font-weight:600;"></div>
+    </form>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+let editingId = null;
+
+// Reads a File into a base64 string (no data-URL prefix) for sending as
+// JSON to /api/upload.
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function loadList() {
+  const list = document.getElementById('list');
+  try {
+    const res = await fetch(`${API_URL}/products`);
+    const products = await res.json();
+    if (products.length === 0) {
+      list.innerHTML = '<p style="color:#777;">No products yet. <a href="admin.html">Add one</a>.</p>';
+      return;
+    }
+    list.innerHTML = products.map(p => `
+      <div class="manage-row">
+        <img src="${p.image_url || 'https://placehold.co/100x100?text=No+Image'}" alt="${p.name}">
+        <div class="info">
+          <div class="name">${p.name}</div>
+          <div class="meta">KSh ${p.price.toLocaleString()} — ${p.category}</div>
+        </div>
+        <button onclick="openEdit(${p.id})">Edit</button>
+        <button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>
+      </div>
+    `).join('');
+  } catch (err) {
+    list.innerHTML = '<p style="color:#c0392b;">Could not load products. Is the backend running?</p>';
+  }
+}
+
+async function openEdit(id) {
+  const res = await fetch(`${API_URL}/products/${id}`);
+  if (!res.ok) return alert('Could not load product');
+  const p = await res.json();
+
+  editingId = id;
+  document.getElementById('editName').value = p.name;
+  document.getElementById('editDescription').value = p.description || '';
+  document.getElementById('editPrice').value = p.price;
+  document.getElementById('editSalePrice').value = p.sale_price || '';
+  document.getElementById('editCategory').value = p.category;
+  document.getElementById('editIsNew').checked = p.is_new;
+  document.getElementById('editImageFile').value = '';
+  const preview = document.getElementById('modalPreview');
+  if (p.images && p.images[0]) {
+    preview.src = p.images[0];
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+  document.getElementById('modalStatus').textContent = '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+document.getElementById('cancelBtn').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.remove('open');
+});
+
+document.getElementById('editImageFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const preview = document.getElementById('modalPreview');
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+  }
+});
+
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const saveBtn = document.getElementById('saveBtn');
+  const status = document.getElementById('modalStatus');
+  saveBtn.disabled = true;
+  status.textContent = 'Saving...';
+
+  try {
+    // Step 1: update product fields
+    const updateRes = await fetch(`${API_URL}/admin/products/${editingId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('editName').value,
+        description: document.getElementById('editDescription').value,
+        price: parseFloat(document.getElementById('editPrice').value),
+        sale_price: document.getElementById('editSalePrice').value ? parseFloat(document.getElementById('editSalePrice').value) : null,
+        category: document.getElementById('editCategory').value,
+        is_new: document.getElementById('editIsNew').checked
+      })
+    });
+    if (!updateRes.ok) throw new Error('Failed to update product details');
+
+    // Step 2: replace image, only if a new file was chosen
+    const imageFile = document.getElementById('editImageFile').files[0];
+    if (imageFile) {
+      status.textContent = 'Uploading new image...';
+      const dataBase64 = await fileToBase64(imageFile);
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: imageFile.name,
+          contentType: imageFile.type,
+          dataBase64
+        })
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Image upload failed');
+
+      const imgRes = await fetch(`${API_URL}/admin/products/${editingId}/image`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blob_url: uploadData.url, is_primary: true })
+      });
+      if (!imgRes.ok) throw new Error('Failed to update image');
+    }
+
+    status.textContent = '✅ Saved!';
+    setTimeout(() => {
+      document.getElementById('modalOverlay').classList.remove('open');
+      loadList();
+    }, 500);
+
+  } catch (err) {
+    status.textContent = '❌ ' + err.message;
+  } finally {
+    saveBtn.disabled = false;
+  }
+});
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product? This cannot be undone.')) return;
+  const res = await fetch(`${API_URL}/admin/products/${id}`, { method: 'DELETE' });
+  if (res.ok) {
+    loadList();
+  } else {
+    alert('Could not delete product.');
+  }
+}
+
+loadList();
+</script>
+
+</body>
+</html>

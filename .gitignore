@@ -1,0 +1,10 @@
+venv
+__pycache__
+.env
+uploads/*
+!uploads/.gitkeep
+myshop-web/node_modules
+myshop-web/.vercel
+myshop-web/.env*
+.DS_Store
+Thumbs.db

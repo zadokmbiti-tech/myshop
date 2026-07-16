@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact - My Shop</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .contact-wrap {
+    max-width: 560px;
+    margin: 60px auto;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .contact-wrap h1 { font-size: 2rem; margin-bottom: 12px; }
+  .contact-wrap > p {
+    color: #666;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 36px;
+  }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .contact-tile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    text-decoration: none;
+    color: #111;
+    text-align: left;
+    transition: box-shadow 0.15s, transform 0.15s;
+  }
+  .contact-tile:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  .contact-tile .icon {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #fff;
+  }
+  .contact-tile .label { font-weight: 600; font-size: 0.95rem; }
+  .contact-tile .sub { font-size: 0.8rem; color: #888; margin-top: 2px; }
+
+  .icon.whatsapp { background: #25D366; }
+  .icon.phone { background: #4a6cf7; }
+  .icon.email { background: #f39c12; }
+  .icon.facebook { background: #1877f2; }
+  .icon.instagram { background: linear-gradient(45deg, #f58529, #dd2a7b, #8134af); }
+  .icon.tiktok { background: #111; }
+
+  @media (max-width: 480px) {
+    .contact-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="contact-wrap">
+  <h1>Get in Touch</h1>
+  <p>Reach us on whichever platform is easiest for you.</p>
+
+  <div class="contact-grid" id="contactGrid"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script src="layout.js"></script>
+<script>
+const tiles = [];
+
+tiles.push({
+  href: `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodeURIComponent("Hi, I'd like to know more about your products.")}`,
+  iconClass: 'whatsapp',
+  icon: '💬',
+  label: 'WhatsApp',
+  sub: 'Chat with us'
+});
+
+tiles.push({
+  href: `tel:+${WHATSAPP_NUMBER}`,
+  iconClass: 'phone',
+  icon: '📞',
+  label: 'Call / Text',
+  sub: CONTACT_PHONE_DISPLAY || WHATSAPP_NUMBER
+});
+
+if (typeof CONTACT_EMAIL !== 'undefined' && CONTACT_EMAIL) {
+  tiles.push({ href: `mailto:${CONTACT_EMAIL}`, iconClass: 'email', icon: '✉️', label: 'Email', sub: CONTACT_EMAIL });
+}
+if (typeof FACEBOOK_URL !== 'undefined' && FACEBOOK_URL) {
+  tiles.push({ href: FACEBOOK_URL, iconClass: 'facebook', icon: 'f', label: 'Facebook', sub: 'Follow us' });
+}
+if (typeof INSTAGRAM_URL !== 'undefined' && INSTAGRAM_URL) {
+  tiles.push({ href: INSTAGRAM_URL, iconClass: 'instagram', icon: '📷', label: 'Instagram', sub: 'Follow us' });
+}
+if (typeof TIKTOK_URL !== 'undefined' && TIKTOK_URL) {
+  tiles.push({ href: TIKTOK_URL, iconClass: 'tiktok', icon: '♪', label: 'TikTok', sub: 'Follow us' });
+}
+
+document.getElementById('contactGrid').innerHTML = tiles.map(t => `
+  <a class="contact-tile" href="${t.href}" target="_blank" rel="noopener">
+    <div class="icon ${t.iconClass}">${t.icon}</div>
+    <div>
+      <div class="label">${t.label}</div>
+      <div class="sub">${t.sub}</div>
+    </div>
+  </a>
+`).join('');
+</script>
+
+</body>
+</html>

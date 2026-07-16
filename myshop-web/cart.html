@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart - My Shop</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="cart-page">
+  <h1>Your Cart</h1>
+  <div id="cartItems"></div>
+  <div class="cart-total" id="cartTotal" style="display:none;">
+    <span>Total</span>
+    <span id="totalAmount"></span>
+  </div>
+  <button class="whatsapp-btn" id="checkoutBtn" style="margin-top:10px;">Checkout via WhatsApp</button>
+</div>
+
+<script src="config.js"></script>
+<script src="cart.js"></script>
+<script src="layout.js"></script>
+<script>
+function renderCart() {
+  const cart = getCart();
+  const container = document.getElementById('cartItems');
+  const totalRow = document.getElementById('cartTotal');
+
+  if (cart.length === 0) {
+    container.innerHTML = '<div class="empty-state">Your cart is empty. <br><a href="shop.html">Go shopping →</a></div>';
+    totalRow.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = cart.map(item => `
+    <div class="cart-item">
+      <img src="${item.image_url || 'https://placehold.co/100x100?text=No+Image'}" alt="${item.name}">
+      <div class="info">
+        <div>${item.name}</div>
+        <div style="color:#777; font-size:0.9rem;">${formatKsh(item.price)} each</div>
+        <div class="qty-controls">
+          <button onclick="decreaseQty(${item.id})">-</button>
+          <span>${item.qty}</span>
+          <button onclick="increaseQty(${item.id})">+</button>
+          <button class="remove" onclick="removeItem(${item.id})">Remove</button>
+        </div>
+      </div>
+      <div>${formatKsh(item.price * item.qty)}</div>
+    </div>
+  `).join('');
+
+  totalRow.style.display = 'flex';
+  document.getElementById('totalAmount').textContent = formatKsh(cartTotal());
+}
+
+function increaseQty(id) {
+  const item = getCart().find(i => i.id === id);
+  updateQty(id, item.qty + 1);
+  renderCart();
+}
+function decreaseQty(id) {
+  const item = getCart().find(i => i.id === id);
+  updateQty(id, item.qty - 1);
+  renderCart();
+}
+function removeItem(id) {
+  removeFromCart(id);
+  renderCart();
+}
+
+document.getElementById('checkoutBtn').addEventListener('click', checkoutViaWhatsApp);
+
+renderCart();
+</script>
+
+</body>
+</html>
