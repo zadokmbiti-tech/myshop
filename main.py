@@ -1,24 +1,13 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import psycopg2
 import os
-import uuid
-from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
 
-UPLOAD_DIR = Path(__file__).parent / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
-
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-
 app = FastAPI()
-
-app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,24 +43,6 @@ class ProductUpdate(BaseModel):
     sale_price: float | None = None
     category: str
     is_new: bool = False
-
-
-@app.post("/admin/upload")
-async def upload_image(file: UploadFile = File(...)):
-    ext = Path(file.filename).suffix.lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail=f"File type {ext} not allowed")
-
-    contents = await file.read()
-    if len(contents) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="File too large (max 10MB)")
-
-    filename = f"{uuid.uuid4().hex}{ext}"
-    filepath = UPLOAD_DIR / filename
-    with open(filepath, "wb") as f:
-        f.write(contents)
-
-    return {"url": f"http://127.0.0.1:8085/uploads/{filename}"}
 
 
 @app.get("/")
