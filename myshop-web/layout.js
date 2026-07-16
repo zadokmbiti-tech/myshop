@@ -19,7 +19,10 @@ function renderHeader() {
   document.body.insertAdjacentHTML('afterbegin', `
     <header>
       <a href="index.html" class="logo">${logoHtml}</a>
-      <nav>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <nav id="site-nav">
         <a href="index.html">Home</a>
         <a href="shop.html">Shop</a>
         <a href="shop.html?category=men">Men</a>
@@ -30,6 +33,22 @@ function renderHeader() {
       </nav>
     </header>
   `);
+
+  const toggle = document.getElementById('nav-toggle');
+  const nav = document.getElementById('site-nav');
+  toggle.addEventListener('click', () => {
+    const isOpen = nav.classList.toggle('open');
+    toggle.classList.toggle('open', isOpen);
+    toggle.setAttribute('aria-expanded', String(isOpen));
+  });
+  // close the menu after tapping a link, so it doesn't stay open on navigation
+  nav.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      nav.classList.remove('open');
+      toggle.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    });
+  });
 }
 
 function renderFooter() {
