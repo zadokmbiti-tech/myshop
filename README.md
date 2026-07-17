@@ -13,10 +13,10 @@ Home page with featured products, a full shop page filterable by category (men /
 Client-side cart stored in `localStorage` (no backend cart/session needed). Checkout doesn't charge a card — it builds a message summarizing items, quantities, and totals and opens WhatsApp with it pre-filled, so the owner closes the sale in a normal chat.
 
 **Admin**
-A single shared-password gate (`admin.html` / `manage.html`) — appropriate for a one-person shop rather than a multi-user system. Lets the owner create/edit/delete products, upload and reorder product images, mark items "new" or "on sale," and set per-product sale pricing.
+A single shared-password gate for admin management — appropriate for a one-person shop rather than a multi-user system. Lets the owner create/edit/delete products, upload and reorder product images, mark items "new" or "on sale," and set per-product sale pricing.
 
 **Image uploads**
-Product photos are uploaded as base64 from the browser to a Vercel Serverless Function (`api/upload.js`), which stores them in Vercel Blob and returns a public URL that gets attached to the product record.
+Product photos are uploaded as base64 from the browser to a Vercel Serverless Function, which stores them in Vercel Blob and returns a public URL that gets attached to the product record.
 
 ## Tech stack
 
