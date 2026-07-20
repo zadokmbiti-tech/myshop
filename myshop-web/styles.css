@@ -337,3 +337,43 @@ footer {
 .admin-wrap button:disabled { background: #999; }
 #status { margin-top: 15px; font-weight: bold; }
 #preview { margin-top: 10px; max-width: 200px; display: none; border-radius: 6px; }
+
+.reviews-wrap {
+  padding: 24px 28px 56px;
+  overflow-x: auto;
+}
+.reviews-track {
+  display: flex;
+  gap: 20px;
+}
+.review-card {
+  flex: 0 0 280px;
+  background: #fff;
+  border: 1px solid rgba(61,34,51,0.12);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 6px 16px rgba(61,34,51,0.06);
+}
+.review-card .stars {
+  color: var(--ochre);
+  font-size: 1rem;
+  letter-spacing: 2px;
+}
+.review-card p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink);
+  opacity: 0.85;
+}
+.review-card .who {
+  font-family: 'Caveat', cursive;
+  font-size: 1.1rem;
+  color: var(--sage);
+
+}
+@media (max-width: 700px) {
+  .review-card { flex: 0 0 240px; }
+}
